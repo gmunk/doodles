@@ -17,7 +17,7 @@ enum Color {
 
 impl Color {
     fn value(&self) -> (u8, u8, u8) {
-        match *self {
+        match self {
             Color::Skobeloff => (25u8, 114u8, 120u8),
             Color::ChampagnePink => (237u8, 221u8, 212u8),
             Color::InternationalOrangeGoldenGateBridge => (196u8, 69u8, 54u8),
