@@ -1,5 +1,6 @@
 [workspace]
 
 members = [
-    "two_colours_grid"
+    "two_colours_grid",
+    "domino_tiling",
 ]
