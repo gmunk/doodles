@@ -34,7 +34,6 @@ impl From<Color> for Rgb {
     }
 }
 
-#[derive(Copy, Clone)]
 struct TileData {
     rect: Rect,
     color: Color,
@@ -51,7 +50,6 @@ impl TileData {
     }
 }
 
-#[derive(Copy, Clone)]
 enum Tile {
     Horizontal(TileData),
     Vertical(TileData),
@@ -134,7 +132,7 @@ impl Tile {
 
 impl Display for Tile {
     fn display(&self, draw: &Draw) {
-        match *self {
+        match self {
             Tile::Horizontal(tile_data) | Tile::Vertical(tile_data) => draw
                 .rect()
                 .color(Rgb::from(tile_data.color))
@@ -147,13 +145,18 @@ impl Display for Tile {
 }
 
 struct Model {
+    should_update: bool,
     cur_index: usize,
     tiles: Vec<Tile>,
 }
 
 impl Model {
-    fn new(cur_index: usize, tiles: Vec<Tile>) -> Self {
-        Self { cur_index, tiles }
+    fn new(should_update: bool, cur_index: usize, tiles: Vec<Tile>) -> Self {
+        Self {
+            should_update,
+            cur_index,
+            tiles,
+        }
     }
 }
 
@@ -178,6 +181,7 @@ fn model(app: &App) -> Model {
         .title("Domino Tiling")
         .resizable(false)
         .view(view)
+        .key_released(key_released)
         .build()
         .expect("There was a problem creating the application's window.");
 
@@ -198,21 +202,23 @@ fn model(app: &App) -> Model {
         0,
     ))];
 
-    Model::new(0, tiles)
+    Model::new(true, 0, tiles)
 }
 
 fn update(_app: &App, model: &mut Model, _update: Update) {
-    let tile = model
-        .tiles
-        .get_mut(model.cur_index)
-        .expect("There is nothing to subdivide");
+    if model.should_update {
+        let tile = model
+            .tiles
+            .get_mut(model.cur_index)
+            .expect("There is nothing to subdivide");
 
-    match tile.subdivide() {
-        Some(t) => {
-            tile.increment_num_subdivided();
-            model.tiles.push(t)
+        match tile.subdivide() {
+            Some(t) => {
+                tile.increment_num_subdivided();
+                model.tiles.push(t)
+            }
+            None => model.cur_index += 1,
         }
-        None => model.cur_index += 1,
     }
 }
 
@@ -223,4 +229,13 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
     draw.to_frame(app, &frame)
         .expect("There was a problem drawing the current frame.");
+}
+
+fn key_released(_app: &App, model: &mut Model, key: Key) {
+    match key {
+        Key::Space => {
+            model.should_update = !model.should_update;
+        }
+        _ => {}
+    }
 }
