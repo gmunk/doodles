@@ -3,4 +3,5 @@
 members = [
     "two_colours_grid",
     "domino_tiling",
+    "poisson_disc_sampling"
 ]
