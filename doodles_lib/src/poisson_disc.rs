@@ -12,84 +12,6 @@ use std::{
 
 const N: u8 = 2;
 
-fn convert_coordinate(coordinate: f32, from: RangeInclusive<f32>, to: Range<f32>) -> f32 {
-    to.start + (coordinate - from.start()) * (to.end - to.start) / (from.end() - from.start())
-}
-trait Random {
-    fn random_from_domain(domain: &Rect) -> Point2;
-    fn random_from_magnitude_range(magnitude_range: RangeInclusive<f32>) -> Point2;
-}
-
-impl Random for Point2 {
-    fn random_from_domain(domain: &Rect<f32>) -> Self {
-        let mut rng = rand::thread_rng();
-
-        Point2::from((
-            rng.gen_range(domain.x.start..=domain.x.end),
-            rng.gen_range(domain.y.start..=domain.y.end),
-        ))
-    }
-
-    fn random_from_magnitude_range(magnitude_range: RangeInclusive<f32>) -> Self {
-        let mut rng = rand::thread_rng();
-
-        Point2::from_angle(rng.gen_range(0.0..=TAU)).with_magnitude(rng.gen_range(magnitude_range))
-    }
-}
-
-enum SampleStatus {
-    Valid,
-    Invalid,
-}
-
-struct Grid {
-    cell_size: u32,
-    domain: Rect,
-    internal_array: Array<Option<Point2>, Ix2>,
-}
-
-impl Grid {
-    fn new(cell_size: u32, domain: Rect) -> Self {
-        let w = (domain.w() / (cell_size as f32)).ceil();
-        let h = (domain.h() / (cell_size as f32)).ceil();
-
-        let internal_array =
-            Array::<Option<Point2>, Ix2>::from_elem((w as usize, h as usize), None);
-
-        Self {
-            cell_size,
-            domain,
-            internal_array,
-        }
-    }
-
-    fn insert(&mut self, point: Point2) {
-        let (x_index, y_index) = self.calculate_grid_indices(&point);
-
-        self.internal_array
-            .slice_mut(s![x_index as usize, y_index as usize])
-            .fill(Some(point));
-    }
-
-    fn calculate_grid_indices(&self, point: &Point2) -> (usize, usize) {
-        let cx = convert_coordinate(
-            point.x,
-            self.domain.x.start..=self.domain.x.end,
-            0.0..self.domain.w(),
-        );
-        let cy = convert_coordinate(
-            point.y,
-            self.domain.y.invert().start..=self.domain.y.invert().end,
-            0.0..self.domain.h(),
-        );
-
-        (
-            (cx / self.cell_size as f32).floor() as usize,
-            (cy / self.cell_size as f32).floor() as usize,
-        )
-    }
-}
-
 pub struct PoissonDiscSampler {
     r: f32,
     k: u8,
@@ -191,5 +113,94 @@ impl PoissonDiscSampler {
             }
             false => SampleStatus::Invalid,
         }
+    }
+}
+
+pub fn calculate_radius(rect: &Rect, start: Option<f32>) -> f32 {
+    let mut rng = rand::thread_rng();
+
+    let s = match start {
+        None => 0.0,
+        Some(s) => s,
+    };
+
+    rng.gen_range(s..=(rect.w() * rect.h()).log2())
+}
+
+fn convert_coordinate(coordinate: f32, from: RangeInclusive<f32>, to: Range<f32>) -> f32 {
+    to.start + (coordinate - from.start()) * (to.end - to.start) / (from.end() - from.start())
+}
+trait Random {
+    fn random_from_domain(domain: &Rect) -> Point2;
+    fn random_from_magnitude_range(magnitude_range: RangeInclusive<f32>) -> Point2;
+}
+
+impl Random for Point2 {
+    fn random_from_domain(domain: &Rect<f32>) -> Self {
+        let mut rng = rand::thread_rng();
+
+        Point2::from((
+            rng.gen_range(domain.x.start..=domain.x.end),
+            rng.gen_range(domain.y.start..=domain.y.end),
+        ))
+    }
+
+    fn random_from_magnitude_range(magnitude_range: RangeInclusive<f32>) -> Self {
+        let mut rng = rand::thread_rng();
+
+        Point2::from_angle(rng.gen_range(0.0..=TAU)).with_magnitude(rng.gen_range(magnitude_range))
+    }
+}
+
+enum SampleStatus {
+    Valid,
+    Invalid,
+}
+
+struct Grid {
+    cell_size: u32,
+    domain: Rect,
+    internal_array: Array<Option<Point2>, Ix2>,
+}
+
+impl Grid {
+    fn new(cell_size: u32, domain: Rect) -> Self {
+        let w = (domain.w() / (cell_size as f32)).ceil();
+        let h = (domain.h() / (cell_size as f32)).ceil();
+
+        let internal_array =
+            Array::<Option<Point2>, Ix2>::from_elem((w as usize, h as usize), None);
+
+        Self {
+            cell_size,
+            domain,
+            internal_array,
+        }
+    }
+
+    fn insert(&mut self, point: Point2) {
+        let (x_index, y_index) = self.calculate_grid_indices(&point);
+
+        self.internal_array
+            .slice_mut(s![x_index as usize, y_index as usize])
+            .fill(Some(point));
+    }
+
+    fn calculate_grid_indices(&self, point: &Point2) -> (usize, usize) {
+        let cx = convert_coordinate(
+            point.x,
+            self.domain.x.start..=self.domain.x.end,
+            0.0..self.domain.w(),
+        );
+        let cy = convert_coordinate(
+            point.y,
+            self.domain.y.invert().start..=self.domain.y.invert().end,
+            0.0..self.domain.h(),
+        );
+
+        (
+            (cx / self.cell_size as f32).floor() as usize,
+            (cy / self.cell_size as f32).floor() as usize,
+        )
     }
 }
