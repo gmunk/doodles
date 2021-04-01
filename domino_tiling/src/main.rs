@@ -1,12 +1,11 @@
+use doodles_lib::tilings::{self, DominoTile};
 use nannou::prelude::*;
 
 const WINDOW_WIDTH: u32 = 1366;
 const WINDOW_HEIGHT: u32 = 768;
 const PADDING: u32 = 50;
 
-trait Display {
-    fn display(&self, draw: &Draw);
-}
+type Rgb = Srgb<u8>;
 
 #[derive(Copy, Clone)]
 enum Color {
@@ -25,8 +24,6 @@ impl Color {
     }
 }
 
-type Rgb = Srgb<u8>;
-
 impl From<Color> for Rgb {
     fn from(c: Color) -> Self {
         let (r, g, b) = c.value();
@@ -34,138 +31,16 @@ impl From<Color> for Rgb {
     }
 }
 
-struct TileData {
-    rect: Rect,
-    color: Color,
-    num_subdivided: u8,
-}
-
-impl TileData {
-    fn new(rect: Rect, color: Color, num_subdivided: u8) -> TileData {
-        return TileData {
-            rect,
-            color,
-            num_subdivided,
-        };
-    }
-}
-
-enum Tile {
-    Horizontal(TileData),
-    Vertical(TileData),
-}
-
-impl Tile {
-    fn subdivide(&self) -> Option<Self> {
-        match self {
-            Tile::Horizontal(tile_data) => {
-                let substitute_horizontal_rect =
-                    Rect::from_w_h(tile_data.rect.w() / 2.0, tile_data.rect.h() / 2.0);
-                let substitute_vertical_rect =
-                    Rect::from_w_h(tile_data.rect.w() / 4.0, tile_data.rect.h());
-
-                match tile_data.num_subdivided {
-                    0 => Some(Tile::Vertical(TileData::new(
-                        substitute_vertical_rect.top_left_of(tile_data.rect),
-                        Color::Skobeloff,
-                        0,
-                    ))),
-                    1 => Some(Tile::Horizontal(TileData::new(
-                        substitute_horizontal_rect.mid_top_of(tile_data.rect),
-                        Color::InternationalOrangeGoldenGateBridge,
-                        0,
-                    ))),
-                    2 => Some(Tile::Horizontal(TileData::new(
-                        substitute_horizontal_rect.mid_bottom_of(tile_data.rect),
-                        Color::InternationalOrangeGoldenGateBridge,
-                        0,
-                    ))),
-                    3 => Some(Tile::Vertical(TileData::new(
-                        substitute_vertical_rect.top_right_of(tile_data.rect),
-                        Color::Skobeloff,
-                        0,
-                    ))),
-                    _ => None,
-                }
-            }
-            Tile::Vertical(tile_data) => {
-                let substitute_horizontal_rect =
-                    Rect::from_w_h(tile_data.rect.w(), tile_data.rect.h() / 4.0);
-                let substitute_vertical_rect =
-                    Rect::from_w_h(tile_data.rect.w() / 2.0, tile_data.rect.h() / 2.0);
-
-                match tile_data.num_subdivided {
-                    0 => Some(Tile::Horizontal(TileData::new(
-                        substitute_horizontal_rect.top_left_of(tile_data.rect),
-                        Color::InternationalOrangeGoldenGateBridge,
-                        0,
-                    ))),
-                    1 => Some(Tile::Vertical(TileData::new(
-                        substitute_vertical_rect.mid_left_of(tile_data.rect),
-                        Color::Skobeloff,
-                        0,
-                    ))),
-                    2 => Some(Tile::Vertical(TileData::new(
-                        substitute_vertical_rect.mid_right_of(tile_data.rect),
-                        Color::Skobeloff,
-                        0,
-                    ))),
-                    3 => Some(Tile::Horizontal(TileData::new(
-                        substitute_horizontal_rect.bottom_left_of(tile_data.rect),
-                        Color::InternationalOrangeGoldenGateBridge,
-                        0,
-                    ))),
-                    _ => None,
-                }
-            }
-        }
-    }
-
-    fn increment_num_subdivided(&mut self) {
-        match self {
-            &mut Tile::Horizontal(ref mut tile_data) | &mut Tile::Vertical(ref mut tile_data) => {
-                tile_data.num_subdivided += 1;
-            }
-        }
-    }
-}
-
-impl Display for Tile {
-    fn display(&self, draw: &Draw) {
-        match self {
-            Tile::Horizontal(tile_data) | Tile::Vertical(tile_data) => draw
-                .rect()
-                .color(Rgb::from(tile_data.color))
-                .stroke_color(Rgb::from(Color::ChampagnePink))
-                .stroke_weight(1.0)
-                .wh(tile_data.rect.wh())
-                .xy(tile_data.rect.xy()),
-        };
-    }
-}
-
 struct Model {
     should_update: bool,
-    cur_index: usize,
-    tiles: Vec<Tile>,
+    tiles: Vec<DominoTile>,
 }
 
 impl Model {
-    fn new(should_update: bool, cur_index: usize, tiles: Vec<Tile>) -> Self {
+    fn new(should_update: bool, tiles: Vec<DominoTile>) -> Self {
         Self {
             should_update,
-            cur_index,
             tiles,
-        }
-    }
-}
-
-impl Display for Model {
-    fn display(&self, draw: &Draw) {
-        draw.background().color(Rgb::from(Color::ChampagnePink));
-
-        for t in &self.tiles {
-            t.display(draw);
         }
     }
 }
@@ -190,42 +65,37 @@ fn model(app: &App) -> Model {
         Some(w) => w.rect().pad(PADDING as f32),
     };
 
-    let tile_rect = Rect::from_w_h(
+    let canvas_rect = Rect::from_w_h(
         (WINDOW_WIDTH - (2 * PADDING)) as f32,
         (WINDOW_HEIGHT - (2 * PADDING)) as f32,
     )
     .top_left_of(window_rect);
 
-    let tiles = vec![Tile::Horizontal(TileData::new(
-        tile_rect,
-        Color::InternationalOrangeGoldenGateBridge,
-        0,
-    ))];
+    let tiles = tilings::create_domino_tiling(canvas_rect, 2);
 
-    Model::new(true, 0, tiles)
+    Model::new(true, tiles)
 }
 
-fn update(_app: &App, model: &mut Model, _update: Update) {
-    if model.should_update {
-        let tile = model
-            .tiles
-            .get_mut(model.cur_index)
-            .expect("There is nothing to subdivide");
-
-        match tile.subdivide() {
-            Some(t) => {
-                tile.increment_num_subdivided();
-                model.tiles.push(t)
-            }
-            None => model.cur_index += 1,
-        }
-    }
-}
+fn update(_app: &App, _model: &mut Model, _update: Update) {}
 
 fn view(app: &App, model: &Model, frame: Frame) {
     let draw = app.draw();
 
-    model.display(&draw);
+    draw.background().color(Rgb::from(Color::ChampagnePink));
+
+    for t in &model.tiles {
+        let (r, c) = match t {
+            DominoTile::Horizontal(tile_data) => (tile_data.rect, Color::Skobeloff),
+            DominoTile::Vertical(tile_data) => {
+                (tile_data.rect, Color::InternationalOrangeGoldenGateBridge)
+            }
+        };
+
+        draw.rect()
+            .x_y(r.x(), r.y())
+            .w_h(r.w(), r.h())
+            .color(Rgb::from(c));
+    }
 
     draw.to_frame(app, &frame)
         .expect("There was a problem drawing the current frame.");
