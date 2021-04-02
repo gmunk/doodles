@@ -24,16 +24,16 @@ impl DominoTile {
 
                 vec![
                     DominoTile::Vertical(TileData::new(
-                        v_rect.top_left_of(tile_data.rect).pad_right(2.0),
+                        v_rect.top_left_of(tile_data.rect).pad_right(20.0),
                     )),
                     DominoTile::Horizontal(TileData::new(
-                        h_rect.mid_top_of(tile_data.rect).pad_bottom(1.0),
+                        h_rect.mid_top_of(tile_data.rect).pad_bottom(10.0),
                     )),
                     DominoTile::Horizontal(TileData::new(
-                        h_rect.mid_bottom_of(tile_data.rect).pad_top(1.0),
+                        h_rect.mid_bottom_of(tile_data.rect).pad_top(10.0),
                     )),
                     DominoTile::Vertical(TileData::new(
-                        v_rect.top_right_of(tile_data.rect).pad_left(2.0),
+                        v_rect.top_right_of(tile_data.rect).pad_left(20.0),
                     )),
                 ]
             }
@@ -43,16 +43,16 @@ impl DominoTile {
 
                 vec![
                     DominoTile::Horizontal(TileData::new(
-                        h_rect.top_left_of(tile_data.rect).pad_bottom(2.0),
+                        h_rect.top_left_of(tile_data.rect).pad_bottom(20.0),
                     )),
                     DominoTile::Vertical(TileData::new(
-                        v_rect.mid_left_of(tile_data.rect).pad_right(1.0),
+                        v_rect.mid_left_of(tile_data.rect).pad_right(10.0),
                     )),
                     DominoTile::Vertical(TileData::new(
-                        v_rect.mid_right_of(tile_data.rect).pad_left(1.0),
+                        v_rect.mid_right_of(tile_data.rect).pad_left(10.0),
                     )),
                     DominoTile::Horizontal(TileData::new(
-                        h_rect.bottom_left_of(tile_data.rect).pad_top(2.0),
+                        h_rect.bottom_left_of(tile_data.rect).pad_top(20.0),
                     )),
                 ]
             }

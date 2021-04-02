@@ -13,7 +13,7 @@ use std::{
 const N: u8 = 2;
 
 pub struct PoissonDiscSampler {
-    r: f32,
+    pub r: f32,
     k: u8,
     grid: Grid,
     active_points: Vec<Point2>,

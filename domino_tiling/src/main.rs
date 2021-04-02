@@ -1,35 +1,12 @@
-use doodles_lib::tilings::{self, DominoTile};
+use doodles_lib::{
+    color::Color,
+    tilings::{self, DominoTile},
+};
 use nannou::prelude::*;
 
 const WINDOW_WIDTH: u32 = 1366;
 const WINDOW_HEIGHT: u32 = 768;
 const PADDING: u32 = 50;
-
-type Rgb = Srgb<u8>;
-
-#[derive(Copy, Clone)]
-enum Color {
-    Skobeloff,
-    ChampagnePink,
-    InternationalOrangeGoldenGateBridge,
-}
-
-impl Color {
-    fn value(&self) -> (u8, u8, u8) {
-        match self {
-            Color::Skobeloff => (25u8, 114u8, 120u8),
-            Color::ChampagnePink => (237u8, 221u8, 212u8),
-            Color::InternationalOrangeGoldenGateBridge => (196u8, 69u8, 54u8),
-        }
-    }
-}
-
-impl From<Color> for Rgb {
-    fn from(c: Color) -> Self {
-        let (r, g, b) = c.value();
-        srgb(r, g, b)
-    }
-}
 
 struct Model {
     should_update: bool,
