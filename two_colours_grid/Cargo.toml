@@ -5,5 +5,6 @@ authors = ["Todor Videv <videvt@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-rand = "0.8.3"
+doodles_lib = { path = "../doodles_lib" }
 nannou = "0.15.0"
+rand = "0.8.3"

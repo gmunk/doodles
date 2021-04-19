@@ -5,7 +5,7 @@
 //! This means that the user is not able to change the
 //! dimensions of the grid and the squares colours. The app attempts to set up an organized
 //! template for further exploration of nannou's capabilities.
-
+use doodles_lib::color::Color;
 use nannou::prelude::*;
 use rand::random;
 
@@ -15,32 +15,6 @@ const SQUARE_SIDE: u32 = 50;
 
 trait Display {
     fn display(&self, draw: &Draw);
-}
-
-#[derive(Copy, Clone)]
-enum Color {
-    Alabaster,
-    DarkLava,
-    MiddleGrey,
-}
-
-impl Color {
-    fn value(&self) -> (u8, u8, u8) {
-        match *self {
-            Color::Alabaster => (244u8, 243u8, 238u8),
-            Color::DarkLava => (70u8, 63u8, 58u8),
-            Color::MiddleGrey => (138u8, 129u8, 124u8),
-        }
-    }
-}
-
-type Rgb = Srgb<u8>;
-
-impl From<Color> for Rgb {
-    fn from(c: Color) -> Self {
-        let (r, g, b) = c.value();
-        srgb(r, g, b)
-    }
 }
 
 /// Square which will be displayed on the screen.
@@ -57,7 +31,11 @@ impl Square {
         Self {
             x,
             y,
-            color: if random() { Color::DarkLava } else { Color::MiddleGrey },
+            color: if random() {
+                Color::DarkLava
+            } else {
+                Color::MiddleGrey
+            },
         }
     }
 }
@@ -108,17 +86,18 @@ fn main() {
 /// window is used to determine the position of each square. It finally creates the model
 /// by passing a vec of squares and a background color to the appropriate constructor function.
 fn model(app: &App) -> Model {
-    let window_id = app.new_window()
+    let window_id = app
+        .new_window()
         .size(WINDOW_WIDTH, WINDOW_HEIGHT)
         .title("Colourful Grid")
         .resizable(false)
         .view(view)
-        .build().expect("There was a problem creating a new window.");
-
+        .build()
+        .expect("There was a problem creating a new window.");
 
     let window_rect = match app.window(window_id) {
         None => panic!("Could not get the current window's rect."),
-        Some(w) => w.rect()
+        Some(w) => w.rect(),
     };
 
     let squares_num = (WINDOW_WIDTH * WINDOW_HEIGHT) / (SQUARE_SIDE * SQUARE_SIDE);
@@ -144,5 +123,6 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
     model.display(&draw);
 
-    draw.to_frame(app, &frame).expect("There was a problem drawing the current frame.");
+    draw.to_frame(app, &frame)
+        .expect("There was a problem drawing the current frame.");
 }

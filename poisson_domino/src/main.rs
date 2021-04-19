@@ -4,6 +4,7 @@ use doodles_lib::{
     tilings::{self, DominoTile},
 };
 use nannou::prelude::*;
+use nannou::winit::event::VirtualKeyCode;
 use std::collections::VecDeque;
 
 const WINDOW_WIDTH: u32 = 1280;
@@ -53,6 +54,7 @@ fn model(app: &App) -> Model {
         .title("Poisson Domino")
         .resizable(false)
         .view(view)
+        .key_pressed(key_pressed)
         .build()
         .expect("There was a problem creating the application's window.");
 
@@ -125,6 +127,17 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
     draw.to_frame(app, &frame)
         .expect("There was a problem drawing the current frame.");
+}
+
+fn key_pressed(app: &App, _model: &mut Model, key: Key) {
+    match key {
+        Key::S => app.main_window().capture_frame(format!(
+            "{}.png",
+            app.exe_name()
+                .expect("There was a problem getting the running executable's name.")
+        )),
+        _ => {}
+    }
 }
 
 fn create_poisson_disc_sampler(rect: Rect) -> PoissonDiscSampler {
