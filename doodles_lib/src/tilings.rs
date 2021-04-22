@@ -1,11 +1,18 @@
 use nannou::geom::Rect;
 
+pub trait Divide {
+    fn divide(&self) -> Vec<Self>
+    where
+        Self: Sized;
+}
+
+#[derive(Copy, Clone)]
 pub struct TileData {
     pub rect: Rect,
 }
 
 impl TileData {
-    fn new(rect: Rect) -> Self {
+    pub fn new(rect: Rect) -> Self {
         Self { rect }
     }
 }
@@ -15,8 +22,8 @@ pub enum DominoTile {
     Vertical(TileData),
 }
 
-impl DominoTile {
-    fn divide(&self) -> Vec<DominoTile> {
+impl Divide for DominoTile {
+    fn divide(&self) -> Vec<Self> {
         match self {
             DominoTile::Horizontal(tile_data) => {
                 let h_rect = Rect::from_w_h(tile_data.rect.w() / 2.0, tile_data.rect.h() / 2.0);
@@ -60,8 +67,202 @@ impl DominoTile {
     }
 }
 
-pub fn create_domino_tiling(rect: Rect, steps: u32) -> Vec<DominoTile> {
-    let mut tiles = vec![DominoTile::Horizontal(TileData::new(rect))];
+#[derive(Copy, Clone)]
+pub enum WandererTileOrientation {
+    Left,
+    Right,
+    Top,
+    Bottom,
+}
+
+#[derive(Copy, Clone)]
+pub enum WandererTile {
+    LeftHanded(TileData, WandererTileOrientation),
+    RightHanded(TileData, WandererTileOrientation),
+}
+
+impl Divide for WandererTile {
+    fn divide(&self) -> Vec<Self> {
+        let rect = match self {
+            WandererTile::LeftHanded(tile_data, _) | WandererTile::RightHanded(tile_data, _) => {
+                Rect::from_w_h(tile_data.rect.w() / 2.0, tile_data.rect.h() / 2.0)
+            }
+        };
+
+        match self {
+            WandererTile::LeftHanded(tile_data, tile_orientation) => match tile_orientation {
+                WandererTileOrientation::Bottom => {
+                    vec![
+                        WandererTile::LeftHanded(
+                            TileData::new(rect.top_left_of(tile_data.rect)),
+                            WandererTileOrientation::Left,
+                        ),
+                        WandererTile::LeftHanded(
+                            TileData::new(rect.top_right_of(tile_data.rect)),
+                            WandererTileOrientation::Bottom,
+                        ),
+                        WandererTile::RightHanded(
+                            TileData::new(rect.bottom_left_of(tile_data.rect)),
+                            WandererTileOrientation::Right,
+                        ),
+                        WandererTile::RightHanded(
+                            TileData::new(rect.bottom_right_of(tile_data.rect)),
+                            WandererTileOrientation::Bottom,
+                        ),
+                    ]
+                }
+                WandererTileOrientation::Left => {
+                    vec![
+                        WandererTile::RightHanded(
+                            TileData::new(rect.top_left_of(tile_data.rect)),
+                            WandererTileOrientation::Bottom,
+                        ),
+                        WandererTile::LeftHanded(
+                            TileData::new(rect.top_right_of(tile_data.rect)),
+                            WandererTileOrientation::Top,
+                        ),
+                        WandererTile::RightHanded(
+                            TileData::new(rect.bottom_left_of(tile_data.rect)),
+                            WandererTileOrientation::Left,
+                        ),
+                        WandererTile::LeftHanded(
+                            TileData::new(rect.bottom_right_of(tile_data.rect)),
+                            WandererTileOrientation::Left,
+                        ),
+                    ]
+                }
+                WandererTileOrientation::Top => {
+                    vec![
+                        WandererTile::RightHanded(
+                            TileData::new(rect.top_left_of(tile_data.rect)),
+                            WandererTileOrientation::Top,
+                        ),
+                        WandererTile::RightHanded(
+                            TileData::new(rect.top_right_of(tile_data.rect)),
+                            WandererTileOrientation::Left,
+                        ),
+                        WandererTile::LeftHanded(
+                            TileData::new(rect.bottom_left_of(tile_data.rect)),
+                            WandererTileOrientation::Top,
+                        ),
+                        WandererTile::LeftHanded(
+                            TileData::new(rect.bottom_right_of(tile_data.rect)),
+                            WandererTileOrientation::Right,
+                        ),
+                    ]
+                }
+                WandererTileOrientation::Right => {
+                    vec![
+                        WandererTile::LeftHanded(
+                            TileData::new(rect.top_left_of(tile_data.rect)),
+                            WandererTileOrientation::Right,
+                        ),
+                        WandererTile::RightHanded(
+                            TileData::new(rect.top_right_of(tile_data.rect)),
+                            WandererTileOrientation::Right,
+                        ),
+                        WandererTile::LeftHanded(
+                            TileData::new(rect.bottom_left_of(tile_data.rect)),
+                            WandererTileOrientation::Bottom,
+                        ),
+                        WandererTile::RightHanded(
+                            TileData::new(rect.bottom_right_of(tile_data.rect)),
+                            WandererTileOrientation::Top,
+                        ),
+                    ]
+                }
+            },
+            WandererTile::RightHanded(tile_data, tile_orientation) => match tile_orientation {
+                WandererTileOrientation::Bottom => {
+                    vec![
+                        WandererTile::RightHanded(
+                            TileData::new(rect.top_left_of(tile_data.rect)),
+                            WandererTileOrientation::Bottom,
+                        ),
+                        WandererTile::RightHanded(
+                            TileData::new(rect.top_right_of(tile_data.rect)),
+                            WandererTileOrientation::Right,
+                        ),
+                        WandererTile::LeftHanded(
+                            TileData::new(rect.bottom_left_of(tile_data.rect)),
+                            WandererTileOrientation::Bottom,
+                        ),
+                        WandererTile::LeftHanded(
+                            TileData::new(rect.bottom_right_of(tile_data.rect)),
+                            WandererTileOrientation::Left,
+                        ),
+                    ]
+                }
+                WandererTileOrientation::Left => {
+                    vec![
+                        WandererTile::LeftHanded(
+                            TileData::new(rect.top_left_of(tile_data.rect)),
+                            WandererTileOrientation::Left,
+                        ),
+                        WandererTile::RightHanded(
+                            TileData::new(rect.top_right_of(tile_data.rect)),
+                            WandererTileOrientation::Left,
+                        ),
+                        WandererTile::LeftHanded(
+                            TileData::new(rect.bottom_left_of(tile_data.rect)),
+                            WandererTileOrientation::Top,
+                        ),
+                        WandererTile::RightHanded(
+                            TileData::new(rect.bottom_right_of(tile_data.rect)),
+                            WandererTileOrientation::Bottom,
+                        ),
+                    ]
+                }
+                WandererTileOrientation::Top => {
+                    vec![
+                        WandererTile::LeftHanded(
+                            TileData::new(rect.top_left_of(tile_data.rect)),
+                            WandererTileOrientation::Right,
+                        ),
+                        WandererTile::LeftHanded(
+                            TileData::new(rect.top_right_of(tile_data.rect)),
+                            WandererTileOrientation::Top,
+                        ),
+                        WandererTile::RightHanded(
+                            TileData::new(rect.bottom_left_of(tile_data.rect)),
+                            WandererTileOrientation::Left,
+                        ),
+                        WandererTile::RightHanded(
+                            TileData::new(rect.bottom_right_of(tile_data.rect)),
+                            WandererTileOrientation::Top,
+                        ),
+                    ]
+                }
+                WandererTileOrientation::Right => {
+                    vec![
+                        WandererTile::RightHanded(
+                            TileData::new(rect.top_left_of(tile_data.rect)),
+                            WandererTileOrientation::Top,
+                        ),
+                        WandererTile::LeftHanded(
+                            TileData::new(rect.top_right_of(tile_data.rect)),
+                            WandererTileOrientation::Bottom,
+                        ),
+                        WandererTile::RightHanded(
+                            TileData::new(rect.bottom_left_of(tile_data.rect)),
+                            WandererTileOrientation::Right,
+                        ),
+                        WandererTile::LeftHanded(
+                            TileData::new(rect.bottom_right_of(tile_data.rect)),
+                            WandererTileOrientation::Right,
+                        ),
+                    ]
+                }
+            },
+        }
+    }
+}
+
+pub fn create_tiling<T>(tile: T, steps: u32) -> Vec<T>
+where
+    T: Divide,
+{
+    let mut tiles = vec![tile];
 
     for _ in 0..steps {
         tiles = tiles.into_iter().flat_map(|t| t.divide()).collect();

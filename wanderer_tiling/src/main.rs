@@ -1,6 +1,6 @@
 use doodles_lib::{
     color::Color,
-    tilings::{self, DominoTile, TileData},
+    tilings::{self, TileData, WandererTile, WandererTileOrientation},
 };
 use nannou::prelude::*;
 
@@ -10,11 +10,11 @@ const PADDING: u32 = 50;
 
 struct Model {
     should_update: bool,
-    tiles: Vec<DominoTile>,
+    tiles: Vec<WandererTile>,
 }
 
 impl Model {
-    fn new(should_update: bool, tiles: Vec<DominoTile>) -> Self {
+    fn new(should_update: bool, tiles: Vec<WandererTile>) -> Self {
         Self {
             should_update,
             tiles,
@@ -43,12 +43,15 @@ fn model(app: &App) -> Model {
     };
 
     let canvas_rect = Rect::from_w_h(
-        (WINDOW_WIDTH - (2 * PADDING)) as f32,
+        (WINDOW_HEIGHT - (2 * PADDING)) as f32,
         (WINDOW_HEIGHT - (2 * PADDING)) as f32,
     )
     .top_left_of(window_rect);
 
-    let tiles = tilings::create_tiling(DominoTile::Horizontal(TileData::new(canvas_rect)), 2);
+    let tiles = tilings::create_tiling(
+        WandererTile::LeftHanded(TileData::new(canvas_rect), WandererTileOrientation::Bottom),
+        5,
+    );
 
     Model::new(true, tiles)
 }
@@ -62,8 +65,8 @@ fn view(app: &App, model: &Model, frame: Frame) {
 
     for t in &model.tiles {
         let (r, c) = match t {
-            DominoTile::Horizontal(tile_data) => (tile_data.rect, Color::Skobeloff),
-            DominoTile::Vertical(tile_data) => {
+            WandererTile::LeftHanded(tile_data, _) => (tile_data.rect, Color::Skobeloff),
+            WandererTile::RightHanded(tile_data, _) => {
                 (tile_data.rect, Color::InternationalOrangeGoldenGateBridge)
             }
         };
