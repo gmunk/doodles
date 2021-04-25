@@ -45,7 +45,7 @@ fn model(app: &App) -> Model {
         Some(w) => w.rect(),
     };
 
-    let r = poisson_disc::calculate_radius(&window_rect, Some(MINIMUM_RADIUS));
+    let r = poisson_disc::calculate_radius(&window_rect, Some(MINIMUM_RADIUS), None);
 
     let poisson_disc_sampler = PoissonDiscSampler::new(window_rect, r, REJECTION_LIMIT);
 

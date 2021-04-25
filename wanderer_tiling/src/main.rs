@@ -4,8 +4,8 @@ use doodles_lib::{
 };
 use nannou::prelude::*;
 
-const WINDOW_WIDTH: u32 = 1366;
-const WINDOW_HEIGHT: u32 = 768;
+const WINDOW_WIDTH: u32 = 1000;
+const WINDOW_HEIGHT: u32 = 1000;
 const PADDING: u32 = 50;
 
 struct Model {
@@ -43,7 +43,7 @@ fn model(app: &App) -> Model {
     };
 
     let canvas_rect = Rect::from_w_h(
-        (WINDOW_HEIGHT - (2 * PADDING)) as f32,
+        (WINDOW_WIDTH - (2 * PADDING)) as f32,
         (WINDOW_HEIGHT - (2 * PADDING)) as f32,
     )
     .top_left_of(window_rect);

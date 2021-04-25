@@ -116,7 +116,7 @@ impl PoissonDiscSampler {
     }
 }
 
-pub fn calculate_radius(rect: &Rect, start: Option<f32>) -> f32 {
+pub fn calculate_radius(rect: &Rect, start: Option<f32>, end: Option<f32>) -> f32 {
     let mut rng = rand::thread_rng();
 
     let s = match start {
@@ -124,7 +124,12 @@ pub fn calculate_radius(rect: &Rect, start: Option<f32>) -> f32 {
         Some(s) => s,
     };
 
-    rng.gen_range(s..=(rect.w() * rect.h()).log2())
+    let e = match end {
+        None => (rect.w() * rect.h()).log2(),
+        Some(e) => e,
+    };
+
+    rng.gen_range(s..=e)
 }
 
 fn convert_coordinate(coordinate: f32, from: RangeInclusive<f32>, to: Range<f32>) -> f32 {

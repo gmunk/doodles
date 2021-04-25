@@ -7,12 +7,11 @@ pub enum Color {
     Skobeloff,
     ChampagnePink,
     InternationalOrangeGoldenGateBridge,
-    SagebrushGreen,
-    Marsala,
-    GraniteGray,
-    Red032,
-    Yellow47,
-    Navy2380,
+    EerieBlack,
+    RedPigment,
+    MintCream,
+    SpaceCadet,
+    Cerise,
 }
 
 impl Color {
@@ -21,12 +20,11 @@ impl Color {
             Color::Skobeloff => (25u8, 114u8, 120u8),
             Color::ChampagnePink => (237u8, 221u8, 212u8),
             Color::InternationalOrangeGoldenGateBridge => (196u8, 69u8, 54u8),
-            Color::SagebrushGreen => (86u8, 117u8, 114u8),
-            Color::Marsala => (150u8, 79u8, 76u8),
-            Color::GraniteGray => (105u8, 102u8, 103u8),
-            Color::Red032 => (246u8, 80u8, 88u8),
-            Color::Yellow47 => (251u8, 222u8, 68u8),
-            Color::Navy2380 => (40u8, 51u8, 74u8),
+            Color::EerieBlack => (37u8, 36u8, 34u8),
+            Color::RedPigment => (255u8, 0u8, 34u8),
+            Color::MintCream => (243u8, 247u8, 240u8),
+            Color::SpaceCadet => (57u8, 47u8, 90u8),
+            Color::Cerise => (218u8, 65u8, 103u8),
         }
     }
 }

@@ -6,5 +6,6 @@ members = [
     "domino_tiling",
     "poisson_disc_sampling",
     "poisson_domino",
-    "wanderer_tiling"
+    "wanderer_tiling",
+    "poisson_wanderer"
 ]
