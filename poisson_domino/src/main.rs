@@ -136,7 +136,7 @@ fn key_pressed(app: &App, _model: &mut Model, key: Key) {
 }
 
 fn create_poisson_disc_sampler(rect: Rect) -> PoissonDiscSampler {
-    let r = poisson_disc::calculate_radius(&rect, Some(MINIMUM_RADIUS), None);
+    let r = poisson_disc::calculate_min_distance(&rect, Some(MINIMUM_RADIUS), None);
 
     PoissonDiscSampler::new(rect, r, REJECTION_LIMIT)
 }

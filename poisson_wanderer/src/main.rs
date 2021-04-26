@@ -4,13 +4,12 @@ use doodles_lib::{
     tilings::{self, TileData, WandererTile, WandererTileOrientation},
 };
 use nannou::prelude::*;
-use std::collections::VecDeque;
 
-const WINDOW_WIDTH: u32 = 800;
-const WINDOW_HEIGHT: u32 = 800;
+const WINDOW_WIDTH: u32 = 1000;
+const WINDOW_HEIGHT: u32 = 1000;
 const REJECTION_LIMIT: u8 = 30;
-const MINIMUM_RADIUS: f32 = 2.0;
-const MAX_RADIUS: f32 = 3.0;
+const MINIMUM_RADIUS: f32 = 1.5;
+const MAX_RADIUS: f32 = 2.0;
 const PADDING: u32 = 50;
 
 struct Point {
@@ -21,30 +20,19 @@ struct Point {
 }
 
 struct Model {
-    poisson_disc_sampler: PoissonDiscSampler,
     poisson_sampled_points: Vec<Point>,
-    current_tile: Option<WandererTile>,
-    tiles: VecDeque<WandererTile>,
 }
 
 impl Model {
-    fn new(
-        poisson_disc_sampler: PoissonDiscSampler,
-        poisson_sampled_points: Vec<Point>,
-        current_tile: Option<WandererTile>,
-        tiles: VecDeque<WandererTile>,
-    ) -> Self {
+    fn new(poisson_sampled_points: Vec<Point>) -> Self {
         Self {
-            poisson_disc_sampler,
             poisson_sampled_points,
-            current_tile,
-            tiles,
         }
     }
 }
 
 fn main() {
-    nannou::app(model).update(update).run();
+    nannou::app(model).run();
 }
 
 fn model(app: &App) -> Model {
@@ -69,45 +57,35 @@ fn model(app: &App) -> Model {
     )
     .top_left_of(window_rect);
 
-    let mut tiles = VecDeque::from(tilings::create_tiling(
+    let tiles = tilings::create_tiling(
         WandererTile::LeftHanded(TileData::new(canvas_rect), WandererTileOrientation::Bottom),
-        5,
-    ));
+        7,
+    );
 
-    let tile = tiles.pop_front().expect("Nothing to pop");
-    let tile_rect = get_tile_rect(&tile);
+    let mut poisson_sampled_points: Vec<Point> = vec![];
 
-    let poisson_disc_sampler = create_poisson_disc_sampler(tile_rect);
+    for t in &tiles {
+        let t_rect = get_tile_rect(t);
+        let mut poisson_disc_sampler = create_poisson_disc_sampler(t_rect);
 
-    Model::new(poisson_disc_sampler, vec![], Some(tile), tiles)
-}
-
-fn update(_app: &App, model: &mut Model, _update: Update) {
-    if let Some(current_tile) = &model.current_tile {
-        let color = match current_tile {
+        let color = match t {
             WandererTile::LeftHanded(_, _) => Color::Cerise,
             WandererTile::RightHanded(_, _) => Color::MintCream,
         };
 
-        if let Some(p) = model.poisson_disc_sampler.sample() {
-            model.poisson_sampled_points.push(Point {
-                x: p.x,
-                y: p.y,
-                r: model.poisson_disc_sampler.r / 4.0,
-                color,
-            });
-        }
-
-        if model.poisson_disc_sampler.is_finished() {
-            match model.tiles.pop_front() {
-                None => model.current_tile = None,
-                Some(t) => {
-                    model.poisson_disc_sampler = create_poisson_disc_sampler(get_tile_rect(&t));
-                    model.current_tile = Some(t);
-                }
+        while !poisson_disc_sampler.is_finished() {
+            if let Some(p) = poisson_disc_sampler.sample() {
+                poisson_sampled_points.push(Point {
+                    x: p.x,
+                    y: p.y,
+                    r: poisson_disc_sampler.r / 4.0,
+                    color,
+                });
             }
         }
     }
+
+    Model::new(poisson_sampled_points)
 }
 
 fn view(app: &App, model: &Model, frame: Frame) {
@@ -138,7 +116,7 @@ fn key_pressed(app: &App, _model: &mut Model, key: Key) {
 }
 
 fn create_poisson_disc_sampler(rect: Rect) -> PoissonDiscSampler {
-    let r = poisson_disc::calculate_radius(&rect, Some(MINIMUM_RADIUS), Some(MAX_RADIUS));
+    let r = poisson_disc::calculate_min_distance(&rect, Some(MINIMUM_RADIUS), Some(MAX_RADIUS));
 
     PoissonDiscSampler::new(rect, r, REJECTION_LIMIT)
 }

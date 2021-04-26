@@ -1,7 +1,10 @@
+//! Groups together the definitions of various colors used while creating the doodles.
 use nannou::color::{self, Srgb};
 
+/// Type alias for Nannou's Srgb type.
 pub type Rgb = Srgb<u8>;
 
+/// Enumeration of custom color names.
 #[derive(Copy, Clone)]
 pub enum Color {
     Skobeloff,
@@ -15,6 +18,7 @@ pub enum Color {
 }
 
 impl Color {
+    /// Returns a tuple of three u8 which denotes the red, green and blue values of a custom color.
     fn value(&self) -> (u8, u8, u8) {
         match self {
             Color::Skobeloff => (25u8, 114u8, 120u8),
@@ -30,6 +34,8 @@ impl Color {
 }
 
 impl From<Color> for Rgb {
+    /// Returns an instance of Nannou's Srgb type
+    /// from a variant of the Color enumeration defined above
     fn from(c: Color) -> Self {
         let (r, g, b) = c.value();
         color::srgb(r, g, b)

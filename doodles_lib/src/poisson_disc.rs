@@ -1,3 +1,6 @@
+//! Provides an implementation of Bridson's poisson-disc sampling algorithm.
+//! The module exposes a struct which holds the algorithm parameters and provides methods
+//! for step-by-step (point-by-point) sampling.
 use nannou::{
     geom::{Point2, Rect},
     math::cgmath::MetricSpace,
@@ -10,8 +13,15 @@ use std::{
     ops::{Add, Range, RangeInclusive},
 };
 
+/// The number of dimensions in which the algorithm works.
+/// For doodling purposes this is set to 2.
+/// In other words no 3D or more poisson-disc sampled doodles are planed, for now.
 const N: u8 = 2;
 
+/// Encapsulates parameters and functionality related to Birdson's poisson-disc sampling algorithm.
+/// The sampler expects several pieces of data–minimum distance r, maximum number of tries for a correct
+/// point sample, a grid of cells,
+/// where each point is going to be assigned and an empty list of active points.
 pub struct PoissonDiscSampler {
     pub r: f32,
     k: u8,
@@ -39,6 +49,15 @@ impl PoissonDiscSampler {
         }
     }
 
+    /// Samples a new point by getting a random active point and generating a sample candidate
+    /// positioned somewhere in the spherical annulus between r and 2r.
+    /// It then proceed to check the surrounding neighbourhood of points, trying to determine
+    /// if the new point in as far away as required (distance shouldn't be less than r)
+    /// from every single neighbour.
+    ///
+    /// It the point is not a valid sample, the active point is removed from the active points list.
+    ///
+    /// Returns the new point if it is a valid sample or None if it is not.
     pub fn sample(&mut self) -> Option<Point2> {
         let index = (random::<f32>() * self.active_points.len() as f32).floor() as usize;
 
@@ -75,10 +94,19 @@ impl PoissonDiscSampler {
             }
         }
     }
+
+    /// Checks if the poisson-disc sampling is finished,
+    /// i.e. if the provided sample domain has been filled with points.
+    /// In terms of the implementation this means that the method checks if the active points list
+    /// is empty.
     pub fn is_finished(&self) -> bool {
         self.active_points.len() == 0
     }
 
+    /// Checks if a point is a valid sample.
+    /// The method creates a window (neighbourhood) of cells around the new point's cell.
+    /// It then checks each cell in this windows for two things, whether it doesn't contains a point
+    /// or if the containing point is sufficiently far away from the new one.
     fn check_point(&self, point: &Point2) -> SampleStatus {
         match self.grid.domain.contains(*point) {
             true => {
@@ -116,7 +144,16 @@ impl PoissonDiscSampler {
     }
 }
 
-pub fn calculate_radius(rect: &Rect, start: Option<f32>, end: Option<f32>) -> f32 {
+/// Calculates the minimum distance, r, based on the sample domain's size.
+/// This function works with two optional values–start and end of the range.
+///
+/// If start is provided, the function just uses it, if it is not, the lower bound for generating
+/// the minimum distance becomes 0.
+///
+/// If end is not provided, the function calculates it like so lof2(w*h), using the sample domain's
+/// width and height. If end is provided, no calculation is done and the function uses it for the
+/// upper bound of the minimum distance.
+pub fn calculate_min_distance(rect: &Rect, start: Option<f32>, end: Option<f32>) -> f32 {
     let mut rng = rand::thread_rng();
 
     let s = match start {
@@ -132,6 +169,8 @@ pub fn calculate_radius(rect: &Rect, start: Option<f32>, end: Option<f32>) -> f3
     rng.gen_range(s..=e)
 }
 
+// Utility function to convert coordinates from a plance where 0,0 is centered in the middle to a
+// plane where 0,0 is in the upper left corner.
 fn convert_coordinate(coordinate: f32, from: RangeInclusive<f32>, to: Range<f32>) -> f32 {
     to.start + (coordinate - from.start()) * (to.end - to.start) / (from.end() - from.start())
 }
