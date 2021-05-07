@@ -3,7 +3,7 @@
 //! for step-by-step (point-by-point) sampling.
 use nannou::{
     geom::{Point2, Rect},
-    math::cgmath::MetricSpace,
+    math::{cgmath::MetricSpace, map_range},
     prelude::TAU,
 };
 use ndarray::{s, Array, Ix2};
@@ -169,11 +169,6 @@ pub fn calculate_min_distance(rect: &Rect, start: Option<f32>, end: Option<f32>)
     rng.gen_range(s..=e)
 }
 
-// Utility function to convert coordinates from a plance where 0,0 is centered in the middle to a
-// plane where 0,0 is in the upper left corner.
-fn convert_coordinate(coordinate: f32, from: RangeInclusive<f32>, to: Range<f32>) -> f32 {
-    to.start + (coordinate - from.start()) * (to.end - to.start) / (from.end() - from.start())
-}
 trait Random {
     fn random_from_domain(domain: &Rect) -> Point2;
     fn random_from_magnitude_range(magnitude_range: RangeInclusive<f32>) -> Point2;
@@ -231,15 +226,19 @@ impl Grid {
     }
 
     fn calculate_grid_indices(&self, point: &Point2) -> (usize, usize) {
-        let cx = convert_coordinate(
+        let cx = map_range(
             point.x,
-            self.domain.x.start..=self.domain.x.end,
-            0.0..self.domain.w(),
+            self.domain.x.start,
+            self.domain.x.end,
+            0.0,
+            self.domain.w(),
         );
-        let cy = convert_coordinate(
+        let cy = map_range(
             point.y,
-            self.domain.y.invert().start..=self.domain.y.invert().end,
-            0.0..self.domain.h(),
+            self.domain.y.start,
+            self.domain.y.end,
+            0.0,
+            self.domain.h(),
         );
 
         (
