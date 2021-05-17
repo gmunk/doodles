@@ -7,5 +7,6 @@ members = [
     "poisson_disc_sampling",
     "poisson_domino",
     "wanderer_tiling",
-    "poisson_wanderer"
+    "poisson_wanderer",
+    "space_packing"
 ]
