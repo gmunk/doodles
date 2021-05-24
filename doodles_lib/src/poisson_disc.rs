@@ -3,9 +3,8 @@
 //! for step-by-step (point-by-point) sampling.
 use crate::rand::Samplable;
 use nannou::{
-    geom::{pt2, Point2, Rect},
-    math::cgmath::MetricSpace,
-    prelude::{map_range, TAU},
+    geom::{Point2, Rect},
+    math::{cgmath::MetricSpace, map_range},
 };
 use ndarray::{s, Array, Ix2};
 use rand::{self, random, Rng};
