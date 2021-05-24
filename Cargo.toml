@@ -9,5 +9,6 @@ members = [
     "wanderer_tiling",
     "poisson_wanderer",
     "space_packing",
-    "flowfield"
+    "flowfield",
+    "posson_flowfield"
 ]

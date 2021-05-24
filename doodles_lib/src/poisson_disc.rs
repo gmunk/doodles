@@ -1,17 +1,15 @@
 //! Provides an implementation of Bridson's poisson-disc sampling algorithm.
 //! The module exposes a struct which holds the algorithm parameters and provides methods
 //! for step-by-step (point-by-point) sampling.
+use crate::rand::Samplable;
 use nannou::{
-    geom::{Point2, Rect},
-    math::{cgmath::MetricSpace, map_range},
-    prelude::TAU,
+    geom::{pt2, Point2, Rect},
+    math::cgmath::MetricSpace,
+    prelude::{map_range, TAU},
 };
 use ndarray::{s, Array, Ix2};
 use rand::{self, random, Rng};
-use std::{
-    cmp::min,
-    ops::{Add, Range, RangeInclusive},
-};
+use std::{cmp::min, ops::Add};
 
 /// The number of dimensions in which the algorithm works.
 /// For doodling purposes this is set to 2.
@@ -167,28 +165,6 @@ pub fn calculate_min_distance(rect: &Rect, start: Option<f32>, end: Option<f32>)
     };
 
     rng.gen_range(s..=e)
-}
-
-trait Random {
-    fn random_from_domain(domain: &Rect) -> Point2;
-    fn random_from_magnitude_range(magnitude_range: RangeInclusive<f32>) -> Point2;
-}
-
-impl Random for Point2 {
-    fn random_from_domain(domain: &Rect<f32>) -> Self {
-        let mut rng = rand::thread_rng();
-
-        Point2::from((
-            rng.gen_range(domain.x.start..=domain.x.end),
-            rng.gen_range(domain.y.start..=domain.y.end),
-        ))
-    }
-
-    fn random_from_magnitude_range(magnitude_range: RangeInclusive<f32>) -> Self {
-        let mut rng = rand::thread_rng();
-
-        Point2::from_angle(rng.gen_range(0.0..=TAU)).with_magnitude(rng.gen_range(magnitude_range))
-    }
 }
 
 enum SampleStatus {

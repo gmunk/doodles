@@ -5,6 +5,6 @@ authors = ["Todor Videv <videvt@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-nannou = "0.15.0"
-ndarray = "0.15.0"
+nannou = "0.16.0"
+ndarray = "0.15.2"
 rand = "0.8.3"

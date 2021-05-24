@@ -1,5 +1,8 @@
-use nannou::noise::{NoiseFn, Perlin, Seedable};
-use nannou::prelude::*;
+use doodles_lib::rand::Samplable;
+use nannou::{
+    noise::{NoiseFn, Perlin, Seedable},
+    prelude::*,
+};
 use rand::prelude::*;
 
 const WINDOW_WIDTH: u32 = 1200;
@@ -246,10 +249,7 @@ fn model(app: &App) -> Model {
 
     let particles = Vec::initialize(10000, |_| {
         Particle::new(
-            pt2(
-                rng.gen_range(canvas.left()..canvas.right()),
-                rng.gen_range(canvas.bottom()..canvas.top()),
-            ),
+            Point2::random_from_domain(&canvas),
             None,
             Vector2::zero(),
             Vector2::from_angle(rand::thread_rng().gen_range(0.0..=TAU)),
