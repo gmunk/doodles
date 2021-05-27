@@ -1,88 +1,49 @@
 use doodles_lib::{
     color::Color,
-    tilings::{self, DominoTile, TileData},
+    tilings::{self, domino::DominoTile},
 };
 use nannou::prelude::*;
 
 const WINDOW_WIDTH: u32 = 1366;
 const WINDOW_HEIGHT: u32 = 768;
 const PADDING: u32 = 50;
+const TILES_PADDING: u32 = 5;
+const STEPS: u8 = 4;
 
-struct Model {
-    should_update: bool,
-    tiles: Vec<DominoTile>,
-}
-
-impl Model {
-    fn new(should_update: bool, tiles: Vec<DominoTile>) -> Self {
-        Self {
-            should_update,
-            tiles,
-        }
-    }
-}
-
-fn main() {
-    nannou::app(model).update(update).run();
-}
-
-fn model(app: &App) -> Model {
-    let window_id = app
-        .new_window()
-        .size(WINDOW_WIDTH, WINDOW_HEIGHT)
-        .title("Domino Tiling")
-        .resizable(false)
-        .view(view)
-        .key_released(key_released)
-        .build()
-        .expect("There was a problem creating the application's window.");
-
-    let window_rect = match app.window(window_id) {
-        None => panic!("Could not get the current window's rect."),
-        Some(w) => w.rect().pad(PADDING as f32),
-    };
-
-    let canvas_rect = Rect::from_w_h(
-        (WINDOW_WIDTH - (2 * PADDING)) as f32,
-        (WINDOW_HEIGHT - (2 * PADDING)) as f32,
-    )
-    .top_left_of(window_rect);
-
-    let tiles = tilings::create_tiling(DominoTile::Horizontal(TileData::new(canvas_rect)), 2);
-
-    Model::new(true, tiles)
-}
-
-fn update(_app: &App, _model: &mut Model, _update: Update) {}
-
-fn view(app: &App, model: &Model, frame: Frame) {
+fn view(app: &App, frame: Frame) {
     let draw = app.draw();
 
-    draw.background().color(Rgb::from(Color::ChampagnePink));
+    if frame.nth() == 0 || app.keys.down.contains(&Key::Delete) {
+        let window_rect = app.window_rect();
 
-    for t in &model.tiles {
-        let (r, c) = match t {
-            DominoTile::Horizontal(tile_data) => (tile_data.rect, Color::Skobeloff),
-            DominoTile::Vertical(tile_data) => {
-                (tile_data.rect, Color::InternationalOrangeGoldenGateBridge)
-            }
-        };
+        let canvas = Rect::from(window_rect)
+            .pad(PADDING as f32)
+            .middle_of(window_rect);
 
-        draw.rect()
-            .x_y(r.x(), r.y())
-            .w_h(r.w(), r.h())
-            .color(Rgb::from(c));
+        let tiles = tilings::create_tiling(vec![DominoTile::Horizontal(canvas)], STEPS);
+
+        for tile in &tiles {
+            let (tile_rect, color) = match tile {
+                DominoTile::Horizontal(rect) => (rect.pad(TILES_PADDING as f32), Color::Skobeloff),
+                DominoTile::Vertical(rect) => (
+                    rect.pad(TILES_PADDING as f32),
+                    Color::InternationalOrangeGoldenGateBridge,
+                ),
+            };
+
+            draw.background().color(Rgb::from(Color::ChampagnePink));
+
+            draw.rect()
+                .x_y(tile_rect.x(), tile_rect.y())
+                .w_h(tile_rect.w(), tile_rect.h())
+                .color(Rgb::from(color));
+        }
     }
 
     draw.to_frame(app, &frame)
         .expect("There was a problem drawing the current frame.");
 }
 
-fn key_released(_app: &App, model: &mut Model, key: Key) {
-    match key {
-        Key::Space => {
-            model.should_update = !model.should_update;
-        }
-        _ => {}
-    }
+fn main() {
+    nannou::sketch(view).size(WINDOW_WIDTH, WINDOW_HEIGHT).run();
 }
