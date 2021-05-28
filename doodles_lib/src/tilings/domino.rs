@@ -3,7 +3,7 @@
 //! This tiling divides two proto-tiles, a horizontal and a vertical one, in four.
 //! The subdivision process varies for each type of tile, the difference being in the division
 //! proportions and the placing of its children.
-use super::Divisible;
+use super::{Divisible, Rectangular};
 use nannou::geom::Rect;
 
 /// Enumeration of the tile variants used to construct a domino tiling.
@@ -41,6 +41,14 @@ impl Divisible for DominoTile {
                     DominoTile::Horizontal(h_rect.bottom_left_of(rect)),
                 ]
             }
+        }
+    }
+}
+
+impl Rectangular for DominoTile {
+    fn rect(&self) -> &Rect {
+        match self {
+            DominoTile::Horizontal(rect) | DominoTile::Vertical(rect) => rect,
         }
     }
 }

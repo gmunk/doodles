@@ -3,7 +3,7 @@
 //! This tilling uses a square proto-tile which has a reflection (handedness) and an orientation.
 //! For the purposes of this implementation both of these concepts are
 //! represented as enums, [`WandererTile`] and [`WandererTileOrientation`] respectively.
-use super::Divisible;
+use super::{Divisible, Rectangular};
 use nannou::geom::Rect;
 
 #[derive(Debug)]
@@ -109,6 +109,14 @@ impl Divisible for WandererTile {
                     ]
                 }
             },
+        }
+    }
+}
+
+impl Rectangular for WandererTile {
+    fn rect(&self) -> &Rect {
+        match self {
+            WandererTile::LeftHanded(rect, _) | WandererTile::RightHanded(rect, _) => rect,
         }
     }
 }

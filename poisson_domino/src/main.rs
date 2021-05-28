@@ -1,3 +1,4 @@
+use doodles_lib::tilings::Rectangular;
 use doodles_lib::{
     algorithms::poisson_disc::{self, PoissonDiscSampler},
     color::Color,
@@ -18,12 +19,6 @@ fn create_poisson_disc_sampler(rect: Rect) -> PoissonDiscSampler {
     let r = poisson_disc::calculate_min_distance(&rect, Some(MINIMUM_RADIUS), None);
 
     PoissonDiscSampler::new(rect, r, REJECTION_LIMIT)
-}
-
-fn get_tile_rect(tile: &DominoTile) -> Rect {
-    match *tile {
-        DominoTile::Horizontal(rect) | DominoTile::Vertical(rect) => rect.pad(TILES_PADDING as f32),
-    }
 }
 
 fn pick_current_color(tile: &DominoTile) -> Color {
@@ -85,7 +80,7 @@ fn model(app: &App) -> Model {
     ));
     let tile = tiles.pop_front().expect("Nothing to pop");
 
-    let poisson_disc_sampler = create_poisson_disc_sampler(get_tile_rect(&tile));
+    let poisson_disc_sampler = create_poisson_disc_sampler(*tile.rect());
 
     let color = pick_current_color(&tile);
 

@@ -3,6 +3,8 @@
 //! In mathematics a tiling is a collection of geometric shapes (called tiles) which cover
 //! the plane without any gaps or overlaps. Each tile of a tilling must be a topological disc,
 //! meaning it must be a connected piece without any holes or lines.
+use nannou::geom::Rect;
+
 pub mod domino;
 pub mod wanderer;
 
@@ -14,6 +16,10 @@ pub trait Divisible {
     fn divide(&self) -> Vec<Self>
     where
         Self: Sized;
+}
+
+pub trait Rectangular {
+    fn rect(&self) -> &Rect;
 }
 
 /// Create a tiling based on the type of element that the input vec holds.
