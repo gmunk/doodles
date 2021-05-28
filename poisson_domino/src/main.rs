@@ -72,7 +72,7 @@ fn model(app: &App) -> Model {
 
     let window_rect = match app.window(window_id) {
         None => panic!("Could not get the current window's rect."),
-        Some(w) => w.rect().pad(PADDING as f32),
+        Some(w) => w.rect(),
     };
 
     let canvas_rect = Rect::from(window_rect)
