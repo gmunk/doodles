@@ -3,11 +3,9 @@
 members = [
     "doodles_lib",
     "domino_tiling",
-    "poisson_disc_sampling",
     "poisson_domino",
-    "wanderer_tiling",
+    "poisson_flowfield",
     "poisson_wanderer",
     "space_packing",
-    "flowfield",
-    "poisson_flowfield"
+    "wanderer_tiling",
 ]
