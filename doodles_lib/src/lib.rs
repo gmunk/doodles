@@ -3,7 +3,6 @@
 pub mod algorithms;
 pub mod collections;
 pub mod color;
-pub mod flowfield;
 mod geometry;
 pub mod particle;
 pub mod rand;

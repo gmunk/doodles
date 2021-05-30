@@ -12,7 +12,7 @@ const WINDOW_HEIGHT: u32 = 720;
 const REJECTION_LIMIT: u8 = 30;
 const MINIMUM_RADIUS: f32 = 3.0;
 const PADDING: u32 = 50;
-const TILES_PADDING: u32 = 10;
+const TILES_PADDING: f32 = 10.0;
 const RADIUS_FACTOR: f32 = 4.0;
 
 fn create_poisson_disc_sampler(rect: Rect) -> PoissonDiscSampler {
@@ -80,7 +80,7 @@ fn model(app: &App) -> Model {
     ));
     let tile = tiles.pop_front().expect("Nothing to pop");
 
-    let poisson_disc_sampler = create_poisson_disc_sampler(*tile.rect());
+    let poisson_disc_sampler = create_poisson_disc_sampler(tile.rect().pad(TILES_PADDING));
 
     let color = pick_current_color(&tile);
 
@@ -99,7 +99,8 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
                     model.current_tile = None;
                 }
                 Some(t) => {
-                    model.poisson_disc_sampler = create_poisson_disc_sampler(get_tile_rect(&t));
+                    model.poisson_disc_sampler =
+                        create_poisson_disc_sampler(t.rect().pad(TILES_PADDING));
                     model.current_color = pick_current_color(&t);
                     model.current_tile = Some(t);
                     model.current_point = None;

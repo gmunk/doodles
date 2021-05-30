@@ -1,7 +1,7 @@
 use nannou::{
     Draw,
     {
-        color::rgba8,
+        color::Rgba8,
         geom::{Point2, Rect, Vector2},
     },
 };
@@ -12,6 +12,7 @@ pub struct Particle {
     velocity: Vector2,
     acceleration: Vector2,
     velocity_limit: f32,
+    color: Rgba8,
 }
 
 impl Particle {
@@ -21,6 +22,7 @@ impl Particle {
         velocity: Vector2,
         acceleration: Vector2,
         velocity_limit: f32,
+        color: Rgba8,
     ) -> Self {
         Self {
             position,
@@ -28,6 +30,7 @@ impl Particle {
             velocity,
             acceleration,
             velocity_limit,
+            color,
         }
     }
 
@@ -42,7 +45,7 @@ impl Particle {
     pub fn display(&self, draw: &Draw) {
         if let Some(previous_position) = self.previous_position {
             draw.line()
-                .color(rgba8(173, 181, 189, 25))
+                .color(self.color)
                 .weight(1.0)
                 .points(previous_position, self.position);
         }

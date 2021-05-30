@@ -1,7 +1,10 @@
 use nannou::{
-    geom::{Rect, Vector2},
+    color::rgb8,
+    geom::{pt2, vec3, Point2, Rect, Vector2},
+    math::map_range,
     noise::{NoiseFn, Seedable},
-    prelude::*,
+    prelude::TAU_F64,
+    Draw,
 };
 
 pub struct Noise<T>
@@ -83,7 +86,7 @@ where
         self.noise.z_offset += self.noise.z_increment;
     }
 
-    fn display(&self, draw: &Draw) {
+    pub fn display(&self, draw: &Draw) {
         for row in 0..self.rows {
             for column in 0..self.columns {
                 let x = (self.canvas.left() + (self.resolution as f32 / 2.0))

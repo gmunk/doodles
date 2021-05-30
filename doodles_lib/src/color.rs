@@ -1,8 +1,5 @@
 //! Groups together the definitions of various colors used while creating the doodles.
-use nannou::color::{self, Srgb};
-
-/// Type alias for Nannou's Srgb type.
-pub type Rgb = Srgb<u8>;
+use nannou::color::{rgb8, Rgb8};
 
 /// Enumeration of custom color names.
 #[derive(Copy, Clone)]
@@ -33,11 +30,11 @@ impl Color {
     }
 }
 
-impl From<Color> for Rgb {
+impl From<Color> for Rgb8 {
     /// Returns an instance of Nannou's Srgb type
     /// from a variant of the Color enumeration defined above
     fn from(c: Color) -> Self {
         let (r, g, b) = c.value();
-        color::srgb(r, g, b)
+        rgb8(r, g, b)
     }
 }

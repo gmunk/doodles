@@ -1,15 +1,18 @@
-use doodles_lib::collections::Initializer;
-use doodles_lib::flowfield::{Flowfield, Noise};
-use doodles_lib::particle::Particle;
-use doodles_lib::rand::Samplable;
 use doodles_lib::{
-    color::Color,
-    poisson_disc::{self, PoissonDiscSampler},
+    algorithms::{
+        flowfield::{Flowfield, Noise},
+        poisson_disc::{self, PoissonDiscSampler},
+    },
+    collections::Initializer,
+    particle::Particle,
+    rand::Samplable,
 };
-use nannou::geom::Ellipse;
-use nannou::math::cgmath::MetricSpace;
-use nannou::noise::{Perlin, Seedable};
-use nannou::prelude::*;
+use nannou::{
+    geom::Ellipse,
+    math::MetricSpace,
+    noise::{Perlin, Seedable},
+    prelude::*,
+};
 use rand::Rng;
 
 const WINDOW_WIDTH: u32 = 1000;
@@ -17,6 +20,13 @@ const WINDOW_HEIGHT: u32 = 1000;
 const REJECTION_LIMIT: u8 = 30;
 const MINIMUM_RADIUS: f32 = 3.0;
 const MAXIMUM_RADIUS: f32 = 7.0;
+const CANVAS_RADIUS: f32 = 300.0;
+const NOISE_Z_OFFSET: f64 = 0.0;
+const NOISE_Z_INCREMENT: f64 = 0.0005;
+const NOISE_XY_INCREMENT: f64 = 0.5;
+const FLOWFIELD_RESOLUTION: u32 = 20;
+const NUMBER_PARTICLES: usize = 10000;
+const RADIUS_FACTOR: f32 = 4.0;
 
 fn create_poisson_disc_sampler(rect: Rect) -> PoissonDiscSampler {
     let r = poisson_disc::calculate_min_distance(&rect, Some(MINIMUM_RADIUS), Some(MAXIMUM_RADIUS));
@@ -35,7 +45,8 @@ struct Model {
     flowfield: Flowfield<Perlin>,
     particles: Vec<Particle>,
     poissonfield: Vec<Point>,
-    should_draw: bool,
+    should_draw_particles: bool,
+    debug: bool,
 }
 
 impl Model {
@@ -44,20 +55,22 @@ impl Model {
         flowfield: Flowfield<Perlin>,
         particles: Vec<Particle>,
         poissonfield: Vec<Point>,
-        should_draw: bool,
+        should_draw_particles: bool,
+        debug: bool,
     ) -> Self {
         Self {
             canvas,
             flowfield,
             particles,
             poissonfield,
-            should_draw,
+            should_draw_particles,
+            debug,
         }
     }
 }
 
 fn model(app: &App) -> Model {
-    let window_id = app
+    let _window_id = app
         .new_window()
         .size(WINDOW_WIDTH, WINDOW_HEIGHT)
         .title("Poisson Flowfield")
@@ -67,14 +80,15 @@ fn model(app: &App) -> Model {
         .build()
         .expect("There was a problem creating the application's window.");
 
-    let window_rect = match app.window(window_id) {
-        None => panic!("Could not get the current window's rect."),
-        Some(w) => w.rect(),
-    };
-
     let mut rng = rand::thread_rng();
 
-    let ellipse = Ellipse::new(Rect::from_xy_wh(pt2(0.0, 0.0), vec2(600.0, 600.0)), 4);
+    let ellipse = Ellipse::new(
+        Rect::from_xy_wh(
+            pt2(0.0, 0.0),
+            vec2(CANVAS_RADIUS * 2.0, CANVAS_RADIUS * 2.0),
+        ),
+        4,
+    );
 
     let subdivisions = ellipse.rect.subdivisions();
 
@@ -83,15 +97,21 @@ fn model(app: &App) -> Model {
     let poissonfield_canvas =
         Rect::from_corners(subdivisions[3].top_left(), subdivisions[1].bottom_right());
 
-    let noise = Noise::new(Perlin::new().set_seed(rng.gen()), 0.0, 0.5, 0.0005);
-    let flowfield = Flowfield::new(flowfield_canvas, noise, 20);
-    let particles = Vec::initialize(10000, |_| {
+    let noise = Noise::new(
+        Perlin::new().set_seed(rng.gen()),
+        NOISE_Z_OFFSET,
+        NOISE_XY_INCREMENT,
+        NOISE_Z_INCREMENT,
+    );
+    let flowfield = Flowfield::new(flowfield_canvas, noise, FLOWFIELD_RESOLUTION);
+    let particles = Vec::initialize(NUMBER_PARTICLES, |_| {
         Particle::new(
             Point2::random_from_domain(&flowfield_canvas),
             None,
             Vector2::zero(),
             Vector2::from_angle(rand::thread_rng().gen_range(0.0..=TAU)),
             1.5,
+            rgba8(173, 181, 189, 25),
         )
     });
 
@@ -100,17 +120,17 @@ fn model(app: &App) -> Model {
 
     while !poisson_disc_sampler.is_finished() {
         if let Some(p) = poisson_disc_sampler.sample() {
-            if p.distance(ellipse.rect.xy()) <= 300.0 {
+            if p.distance(ellipse.rect.xy()) <= CANVAS_RADIUS {
                 poissonfield.push(Point {
                     x: p.x,
                     y: p.y,
-                    r: poisson_disc_sampler.r / 4.0,
+                    r: poisson_disc_sampler.r / RADIUS_FACTOR,
                 });
             }
         }
     }
 
-    Model::new(ellipse, flowfield, particles, poissonfield, true)
+    Model::new(ellipse, flowfield, particles, poissonfield, true, false)
 }
 
 fn update(_app: &App, model: &mut Model, _update: Update) {
@@ -143,9 +163,14 @@ fn view(app: &App, model: &Model, frame: Frame) {
                 .color(rgb8(173, 181, 189));
         }
     }
-    if model.should_draw {
+
+    if model.debug {
+        model.flowfield.display(&draw);
+    }
+
+    if model.should_draw_particles {
         for particle in &model.particles {
-            if particle.position.distance(model.canvas.rect.xy()) <= 300.0 {
+            if particle.position.distance(model.canvas.rect.xy()) <= CANVAS_RADIUS {
                 particle.display(&draw);
             }
         }
@@ -162,7 +187,7 @@ fn key_pressed(app: &App, model: &mut Model, key: Key) {
             app.exe_name()
                 .expect("There was a problem getting the running executable's name.")
         )),
-        Key::Space => model.should_draw = !model.should_draw,
+        Key::Space => model.should_draw_particles = !model.should_draw_particles,
         _ => {}
     }
 }
