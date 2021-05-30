@@ -1,7 +1,8 @@
+use doodles_lib::tilings::Rectangular;
 use doodles_lib::{
+    algorithms::poisson_disc::{self, PoissonDiscSampler},
     color::Color,
-    poisson_disc::{self, PoissonDiscSampler},
-    tilings::{self, DominoTile, TileData},
+    tilings::{self, domino::DominoTile},
 };
 use nannou::prelude::*;
 use std::collections::VecDeque;
@@ -11,39 +12,46 @@ const WINDOW_HEIGHT: u32 = 720;
 const REJECTION_LIMIT: u8 = 30;
 const MINIMUM_RADIUS: f32 = 3.0;
 const PADDING: u32 = 50;
+const TILES_PADDING: f32 = 10.0;
+const RADIUS_FACTOR: f32 = 4.0;
 
-struct Point {
-    x: f32,
-    y: f32,
-    r: f32,
-    color: Color,
+fn create_poisson_disc_sampler(rect: Rect) -> PoissonDiscSampler {
+    let r = poisson_disc::calculate_min_distance(&rect, Some(MINIMUM_RADIUS), None);
+
+    PoissonDiscSampler::new(rect, r, REJECTION_LIMIT)
+}
+
+fn pick_current_color(tile: &DominoTile) -> Color {
+    match tile {
+        DominoTile::Horizontal(_) => Color::RedPigment,
+        DominoTile::Vertical(_) => Color::MintCream,
+    }
 }
 
 struct Model {
     poisson_disc_sampler: PoissonDiscSampler,
-    poisson_sampled_points: Vec<Point>,
     current_tile: Option<DominoTile>,
+    current_point: Option<Point2>,
+    current_color: Color,
     tiles: VecDeque<DominoTile>,
 }
 
 impl Model {
     fn new(
         poisson_disc_sampler: PoissonDiscSampler,
-        poisson_sampled_points: Vec<Point>,
         current_tile: Option<DominoTile>,
+        current_point: Option<Point2>,
+        current_color: Color,
         tiles: VecDeque<DominoTile>,
     ) -> Self {
         Self {
             poisson_disc_sampler,
-            poisson_sampled_points,
             current_tile,
+            current_point,
+            current_color,
             tiles,
         }
     }
-}
-
-fn main() {
-    nannou::app(model).update(update).run();
 }
 
 fn model(app: &App) -> Model {
@@ -59,49 +67,43 @@ fn model(app: &App) -> Model {
 
     let window_rect = match app.window(window_id) {
         None => panic!("Could not get the current window's rect."),
-        Some(w) => w.rect().pad(PADDING as f32),
+        Some(w) => w.rect(),
     };
 
-    let canvas_rect = Rect::from_w_h(
-        (WINDOW_WIDTH - (2 * PADDING)) as f32,
-        (WINDOW_HEIGHT - (2 * PADDING)) as f32,
-    )
-    .top_left_of(window_rect);
+    let canvas_rect = Rect::from(window_rect)
+        .pad(PADDING as f32)
+        .middle_of(window_rect);
 
     let mut tiles = VecDeque::from(tilings::create_tiling(
-        DominoTile::Horizontal(TileData::new(canvas_rect)),
+        vec![DominoTile::Horizontal(canvas_rect)],
         2,
     ));
     let tile = tiles.pop_front().expect("Nothing to pop");
-    let tile_rect = get_tile_rect(&tile);
 
-    let poisson_disc_sampler = create_poisson_disc_sampler(tile_rect);
+    let poisson_disc_sampler = create_poisson_disc_sampler(tile.rect().pad(TILES_PADDING));
 
-    Model::new(poisson_disc_sampler, vec![], Some(tile), tiles)
+    let color = pick_current_color(&tile);
+
+    Model::new(poisson_disc_sampler, Some(tile), None, color, tiles)
 }
 
 fn update(_app: &App, model: &mut Model, _update: Update) {
-    if let Some(current_tile) = &model.current_tile {
-        let color = match current_tile {
-            DominoTile::Horizontal(_) => Color::RedPigment,
-            DominoTile::Vertical(_) => Color::MintCream,
-        };
-
-        if let Some(p) = model.poisson_disc_sampler.sample() {
-            model.poisson_sampled_points.push(Point {
-                x: p.x,
-                y: p.y,
-                r: model.poisson_disc_sampler.r / 4.0,
-                color,
-            });
+    if let Some(_) = &model.current_tile {
+        if let Some(point) = model.poisson_disc_sampler.sample() {
+            model.current_point = Some(point);
         }
 
         if model.poisson_disc_sampler.is_finished() {
             match model.tiles.pop_front() {
-                None => model.current_tile = None,
+                None => {
+                    model.current_tile = None;
+                }
                 Some(t) => {
-                    model.poisson_disc_sampler = create_poisson_disc_sampler(get_tile_rect(&t));
+                    model.poisson_disc_sampler =
+                        create_poisson_disc_sampler(t.rect().pad(TILES_PADDING));
+                    model.current_color = pick_current_color(&t);
                     model.current_tile = Some(t);
+                    model.current_point = None;
                 }
             }
         }
@@ -111,13 +113,15 @@ fn update(_app: &App, model: &mut Model, _update: Update) {
 fn view(app: &App, model: &Model, frame: Frame) {
     let draw = app.draw();
 
-    draw.background().color(Rgb::from(Color::EerieBlack));
+    if frame.nth() == 0 || app.keys.down.contains(&Key::Delete) {
+        draw.background().color(Rgb::from(Color::EerieBlack));
+    }
 
-    for p in &model.poisson_sampled_points {
+    if let Some(current_point) = &model.current_point {
         draw.ellipse()
-            .x_y(p.x, p.y)
-            .radius(p.r)
-            .color(Rgb::from(p.color));
+            .x_y(current_point.x, current_point.y)
+            .radius(model.poisson_disc_sampler.r / RADIUS_FACTOR)
+            .color(Rgb::from(model.current_color));
     }
 
     draw.to_frame(app, &frame)
@@ -135,16 +139,6 @@ fn key_pressed(app: &App, _model: &mut Model, key: Key) {
     }
 }
 
-fn create_poisson_disc_sampler(rect: Rect) -> PoissonDiscSampler {
-    let r = poisson_disc::calculate_min_distance(&rect, Some(MINIMUM_RADIUS), None);
-
-    PoissonDiscSampler::new(rect, r, REJECTION_LIMIT)
-}
-
-fn get_tile_rect(tile: &DominoTile) -> Rect {
-    match tile {
-        DominoTile::Horizontal(ref tile_data) | DominoTile::Vertical(ref tile_data) => {
-            tile_data.rect
-        }
-    }
+fn main() {
+    nannou::app(model).update(update).run();
 }

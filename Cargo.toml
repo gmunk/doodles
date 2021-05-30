@@ -2,13 +2,10 @@
 
 members = [
     "doodles_lib",
-    "two_colours_grid",
     "domino_tiling",
-    "poisson_disc_sampling",
     "poisson_domino",
-    "wanderer_tiling",
+    "poisson_flowfield",
     "poisson_wanderer",
     "space_packing",
-    "flowfield",
-    "posson_flowfield"
+    "wanderer_tiling",
 ]

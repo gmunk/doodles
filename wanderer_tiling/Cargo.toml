@@ -8,4 +8,4 @@ edition = "2018"
 
 [dependencies]
 doodles_lib = { path = "../doodles_lib" }
-nannou = "0.15.0"
+nannou = "0.16.0"
